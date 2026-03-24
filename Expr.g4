@@ -1,62 +1,75 @@
 grammar Expr;
 
-/* =========================
-   REGRAS SINTÁTICAS (Parser)
-   ========================= */
+program : statement* EOF ;
 
-expr
-    : orExpr
+statement
+    : varDeclaration
+    | assignment
+    | ifStatement
+    | whileStatement
+    | printStatement
+    | inputStatement
     ;
 
-orExpr
-    : andExpr (OR andExpr)*
+varDeclaration : 'var' ID (ASSIGN expr)? SEMI ;
+
+assignment : ID ASSIGN expr SEMI ;
+
+ifStatement : 'if' LPAREN condition RPAREN LBRACE statement* RBRACE (ELSE LBRACE statement* RBRACE)? ;
+
+whileStatement : 'while' LPAREN condition RPAREN LBRACE statement* RBRACE ;
+
+printStatement : 'print' LPAREN (expr | STRING) RPAREN SEMI ;
+
+inputStatement : 'input' LPAREN ID RPAREN SEMI ;
+
+expr: <assoc=right> expr POW expr    # powerExpr
+    | expr (MUL | DIV) expr          # mulDivExpr
+    | expr (ADD | SUB) expr          # addSubExpr
+    | atom                           # atomExpr
     ;
 
-andExpr
-    : notExpr (AND notExpr)*
-    ;
-
-notExpr
-    : NOT notExpr
-    | atom
+condition
+    : condition (AND | OR) condition
+    | NOT condition
+    | expr (LT | GT | EQ | LE | GE) expr
+    | 'true'
+    | 'false'
+    | LPAREN condition RPAREN
     ;
 
 atom
-    : relation
+    : INT
+    | ID
     | LPAREN expr RPAREN
+    | 'input' LPAREN ID RPAREN
     ;
 
-relation
-    : INT relOp INT
-    ;
+POW    : '^' ;
+MUL    : '*' ;
+DIV    : '/' ;
+ADD    : '+' ;
+SUB    : '-' ;
+EQ     : '==' ;
+LT     : '<' ;
+GT     : '>' ;
+LE     : '<=' ;
+GE     : '>=' ;
+ASSIGN : '=' ;
 
-relOp
-    : GT
-    | LT
-    | GE
-    | LE
-    | EQ
-    | NE
-    ;
+AND    : 'and' ;
+OR     : 'or' ;
+NOT    : 'not' ;
+ELSE   : 'else' ;
 
-/* =========================
-   REGRAS LÉXICAS (Lexer)
-   ========================= */
+ID     : [a-zA-Z_][a-zA-Z0-9_]* ;
+INT    : [0-9]+ ('.' [0-9]+)? ; 
+STRING : '"' ( '""' | ~('"'|'\r'|'\n') )* '"' ;
 
-AND : 'and';
-OR  : 'or';
-NOT : 'not';
+LPAREN : '(' ;
+RPAREN : ')' ;
+LBRACE : '{' ;
+RBRACE : '}' ;
+SEMI   : ';' ;
 
-GT : '>';
-LT : '<';
-GE : '>=';
-LE : '<=';
-EQ : '==';
-NE : '!=';
-
-LPAREN : '(';
-RPAREN : ')';
-
-INT : [0-9]+;
-
-WS : [ \t\r\n]+ -> skip;
+WS     : [ \t\r\n]+ -> skip ;
